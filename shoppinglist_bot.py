@@ -13,16 +13,26 @@ def handle(msg):
     print(content_type, chat_type, chat_id)
 
     if content_type == 'text':
-    	if "write" in msg['text'].lower():
-    		writeToSpread(chat_id, msg['text'])  
-    	elif "get" in msg['text'].lower():
-    		bot.sendMessage( chat_id, getList( ) )
-    	elif "delete" in msg['text'].lower():
-    		bot.sendMessage( chat_id, unregisterChat( ) )	
-    	elif "info" in msg['text'].lower():
-    		bot.sendMessage( chat_id, showInfo( ) )
+        if "write" in msg['text'].lower():
+            writeToSpread(chat_id, msg['text'])  
+        elif "get" in msg['text'].lower():
+            bot.sendMessage( chat_id, getList( ) )
+        elif "unregister" in msg['text'].lower():
+            bot.sendMessage( chat_id, unregisterChat( ) )	
+        elif "info" in msg['text'].lower():
+            bot.sendMessage( chat_id, showInfo( ) )
+        elif "delete" in msg['text'].lower():
+            bot.sendMessage( chat_id, newList( ) )
 
+def newList():
+    gc = gspread.authorize(credentials)
+    document = gc.open("test")
+    worksheet = document.get_worksheet(0)
+    worksheetNew = document.add_worksheet(title=str(time.time()), rows="300", cols="1")
+    worksheetNew.update_cell(1, 1, "---Einkaufsliste---")
+    document.del_worksheet(worksheet)
 
+    return "Neue Liste angelegt"
 
 #saves all chat ids that should be informed of events
 def getList():
@@ -48,11 +58,11 @@ def writeToSpread(ID, text):
     wks = gc.open("test").sheet1
 
     i=2
-    while( wks.cell(i, 2).value ):
+    while( wks.cell(i, 1).value ):
         i = i+1
-        cell = wks.cell(i, 2).value
+        cell = wks.cell(i, 1).value
 
-    wks.update_cell(i, 2, text.replace('write ',''))
+    wks.update_cell(i, 1, text.replace('write ',''))
 
     bot.sendMessage( ID, "Eingetragen"  )
 
