@@ -13,10 +13,8 @@ def handle(msg):
     print(content_type, chat_type, chat_id)
 
     if content_type == 'text':
-    	if "get" in msg['text'].lower():
-    		bot.sendMessage( chat_id, getValue( msg['text'].lower() ) )  
-    	elif "show" in msg['text'].lower():
-    		bot.sendMessage( chat_id, getFhemObjects( msg['text'].lower() ) )
+    	if "write" in msg['text'].lower():
+    		writeToSpread(chat_id, msg['text'])  
     	elif "register" in msg['text'].lower():
     		bot.sendMessage( chat_id, registerChat( ) )
     	elif "delete" in msg['text'].lower():
@@ -25,16 +23,6 @@ def handle(msg):
     		bot.sendMessage( chat_id, showInfo( ) )
 
 
-#returns value of a fhem object
-def getValue(text):
-	fhemObject = text.split()[-1]
-	return "getValue"
-
-#returns all fhem objects
-def getFhemObjects(text):
-	fhemObject = text.split()[-1]
-	#TODO: get FHEM objects containing
-	return "showObjects"
 
 #saves all chat ids that should be informed of events
 def registerChat():
@@ -50,10 +38,19 @@ def showInfo():
 	infoText = "get [Name des Objekts] --- Zeigt den aktuellen Wert des Fhem Objekts \nshow [Suchbegriff] --- Zeigt alle Fhem Objekte, die den Suchbegriff beinhalten \nregister --- Registriert den Benutzer als zukünftigen Empfänger von Ereignissen \ndelete --- Entfernt den Benutzer aus der Liste der Empfänger von Ereignissen \ninfo --- Zeigt diese Hilfe an \n "
 	return infoText
 
-def writeToSpread():
+def writeToSpread(ID, text):
     gc = gspread.authorize(credentials)
-
     wks = gc.open("test").sheet1
+
+    i=1
+    while( wks.cell(i, 1).value ):
+        i = i+1
+        cell = wks.cell(i, 1).value
+        print("i: " + str(i) + str(cell))
+
+    wks.update_cell(i, 1, text.replace('write ',''))
+
+    bot.sendMessage( ID, "Eingetragen"  )
 
 
 
