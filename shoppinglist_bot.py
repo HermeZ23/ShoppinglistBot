@@ -1,6 +1,12 @@
 import sys
 import time
 import telepot
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+scope = ['https://spreadsheets.google.com/feeds']
+
+credentials = ServiceAccountCredentials.from_json_keyfile_name('cred.json', scope)
 
 def handle(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
@@ -43,6 +49,11 @@ def unregisterChat():
 def showInfo():
 	infoText = "get [Name des Objekts] --- Zeigt den aktuellen Wert des Fhem Objekts \nshow [Suchbegriff] --- Zeigt alle Fhem Objekte, die den Suchbegriff beinhalten \nregister --- Registriert den Benutzer als zukünftigen Empfänger von Ereignissen \ndelete --- Entfernt den Benutzer aus der Liste der Empfänger von Ereignissen \ninfo --- Zeigt diese Hilfe an \n "
 	return infoText
+
+def writeToSpread():
+    gc = gspread.authorize(credentials)
+
+    wks = gc.open("test").sheet1
 
 
 
