@@ -37,8 +37,8 @@ def newList():
 #saves all chat ids that should be informed of events
 def getList():
     gc = gspread.authorize(credentials)
-    wks = gc.open("test").sheet1
-    ekList = wks.col_values(2)
+    worksheet = gc.open("test").sheet1
+    ekList = worksheet.col_values(1)
     msg = ""
     for cell in ekList:
         msg += str(cell) + "\n"
@@ -55,14 +55,30 @@ def showInfo():
 
 def writeToSpread(ID, text):
     gc = gspread.authorize(credentials)
-    wks = gc.open("test").sheet1
+    worksheet = gc.open("test").sheet1
+    entry = text.replace('write ','')
+    values_list = worksheet.col_values(1)
+    
+    found = 0
+
+    for value in values_list:
+        #rint(entry.lower() + " : " + str(value).lower())
+        if entry.lower() in str(value).lower():
+            found = 1
+            cell = worksheet.find(str(value))
+            print(" " + str(cell.row) + " " + str(cell.col))
+    
+    if found == 1:
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                   [InlineKeyboardButton(text='Press me', callback_data='press')],
+               ])
 
     i=2
-    while( wks.cell(i, 1).value ):
+    while( worksheet.cell(i, 1).value ):
         i = i+1
-        cell = wks.cell(i, 1).value
+        cell = worksheet.cell(i, 1).value
 
-    wks.update_cell(i, 1, text.replace('write ',''))
+    worksheet.update_cell(i, 1, entry)
 
     bot.sendMessage( ID, "Eingetragen"  )
 
