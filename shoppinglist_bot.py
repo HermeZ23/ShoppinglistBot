@@ -15,8 +15,8 @@ def handle(msg):
     if content_type == 'text':
     	if "write" in msg['text'].lower():
     		writeToSpread(chat_id, msg['text'])  
-    	elif "register" in msg['text'].lower():
-    		bot.sendMessage( chat_id, registerChat( ) )
+    	elif "get" in msg['text'].lower():
+    		bot.sendMessage( chat_id, getList( ) )
     	elif "delete" in msg['text'].lower():
     		bot.sendMessage( chat_id, unregisterChat( ) )	
     	elif "info" in msg['text'].lower():
@@ -25,9 +25,14 @@ def handle(msg):
 
 
 #saves all chat ids that should be informed of events
-def registerChat():
-	#TODO: persistent list of all chatIDs
-	return "Chat Registriert"
+def getList():
+    gc = gspread.authorize(credentials)
+    wks = gc.open("test").sheet1
+    ekList = wks.col_values(2)
+    msg = ""
+    for cell in ekList:
+        msg += str(cell) + "\n"
+    return msg
 
 #deletes chat id from inform list
 def unregisterChat():
@@ -42,13 +47,12 @@ def writeToSpread(ID, text):
     gc = gspread.authorize(credentials)
     wks = gc.open("test").sheet1
 
-    i=1
-    while( wks.cell(i, 1).value ):
+    i=2
+    while( wks.cell(i, 2).value ):
         i = i+1
-        cell = wks.cell(i, 1).value
-        print("i: " + str(i) + str(cell))
+        cell = wks.cell(i, 2).value
 
-    wks.update_cell(i, 1, text.replace('write ',''))
+    wks.update_cell(i, 2, text.replace('write ',''))
 
     bot.sendMessage( ID, "Eingetragen"  )
 
