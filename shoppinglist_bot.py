@@ -3,10 +3,14 @@ import time
 import telepot
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 
 scope = ['https://spreadsheets.google.com/feeds']
 
 credentials = ServiceAccountCredentials.from_json_keyfile_name('cred.json', scope)
+gc = gspread.authorize(credentials)
+document = gc.open("test")
+worksheet = document.get_worksheet(0)
 
 def handle(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
@@ -25,9 +29,6 @@ def handle(msg):
             bot.sendMessage( chat_id, newList( ) )
 
 def newList():
-    gc = gspread.authorize(credentials)
-    document = gc.open("test")
-    worksheet = document.get_worksheet(0)
     worksheetNew = document.add_worksheet(title=str(time.time()), rows="300", cols="1")
     worksheetNew.update_cell(1, 1, "---Einkaufsliste---")
     document.del_worksheet(worksheet)
@@ -36,8 +37,6 @@ def newList():
 
 #saves all chat ids that should be informed of events
 def getList():
-    gc = gspread.authorize(credentials)
-    worksheet = gc.open("test").sheet1
     ekList = worksheet.col_values(1)
     msg = ""
     for cell in ekList:
@@ -54,25 +53,25 @@ def showInfo():
 	return infoText
 
 def writeToSpread(ID, text):
-    gc = gspread.authorize(credentials)
-    worksheet = gc.open("test").sheet1
     entry = text.replace('write ','')
     values_list = worksheet.col_values(1)
     
     found = 0
-
+    items = []
     for value in values_list:
         #rint(entry.lower() + " : " + str(value).lower())
         if entry.lower() in str(value).lower():
             found = 1
             cell = worksheet.find(str(value))
-            print(" " + str(cell.row) + " " + str(cell.col))
+            items.append(cell)
     
     if found == 1:
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                   [InlineKeyboardButton(text='Press me', callback_data='press')],
-               ])
-
+        for item in items:
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text=item.value, callback_data='replace' + str(item.row) + " " + str(item.col))],
+               ])           
+            bot.sendMessage( ID, "Ersetzen?" , reply_markup=keyboard )
+    
     i=2
     while( worksheet.cell(i, 1).value ):
         i = i+1
@@ -80,14 +79,19 @@ def writeToSpread(ID, text):
 
     worksheet.update_cell(i, 1, entry)
 
-    bot.sendMessage( ID, "Eingetragen"  )
+    bot.sendMessage( ID, "Eingetragen")
 
+def on_callback_query(msg):
+    query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
+    print('Callback Query:', query_id, from_id, query_data)
+
+    bot.answerCallbackQuery(query_id, text='Got it')
 
 
 TOKEN = sys.argv[1]  # get token from command-line
 
 bot = telepot.Bot(TOKEN)
-bot.message_loop(handle)
+bot.message_loop({'chat': handle,'callback_query': on_callback_query})
 print ('Listening ...')
 
 # Keep the program running.
